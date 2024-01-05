@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from sqlalchemy import select
@@ -36,6 +36,8 @@ class MainWindow(QtWidgets.QWidget):
         self.setFixedSize(800, 600)
         with open("styles.qss", "r") as f:
             self.setStyleSheet(f.read())
+
+        self.message_box = QtWidgets.QMessageBox()
 
         self.value_label = QtWidgets.QLabel("Valor")
         self.value_input = QtWidgets.QLineEdit()
@@ -82,6 +84,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.records_table = QtWidgets.QTableView()
         self.update_records_table()
+        self.records_table.setColumnHidden(0, True)
         self.records_year_combobox.currentIndexChanged.connect(
             self.update_records_table
         )
@@ -89,11 +92,15 @@ class MainWindow(QtWidgets.QWidget):
             self.update_records_table
         )
 
+        self.remove_record_button = QtWidgets.QPushButton("Remover Registros")
+        self.remove_record_button.clicked.connect(self.remove_records)
+
         self.records_table_layout = QtWidgets.QVBoxLayout()
         self.records_table_layout.addWidget(self.records_table_label)
         self.records_table_layout.addLayout(self.records_year_layout)
         self.records_table_layout.addLayout(self.records_month_layout)
         self.records_table_layout.addWidget(self.records_table)
+        self.records_table_layout.addWidget(self.remove_record_button)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
         self.main_layout.addLayout(self.inputs_layout)
@@ -101,22 +108,27 @@ class MainWindow(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def add_record(self):
-        with Session() as session:
-            current_date = self.record_date_calendar.selectedDate().currentDate()
-            record_date = date(
-                year=current_date.year(),
-                month=current_date.month(),
-                day=current_date.day(),
-            )
-            record = Record(
-                value=float(self.value_input.text().replace(",", ".")),
-                record_date=record_date,
-            )
-            session.add(record)
-            session.commit()
-        self.value_input.setText("")
-        self.update_records_table()
-        self.message_box.setText("Registro Adicionado")
+        if self.value_input.text():
+            with Session() as session:
+                current_date = self.record_date_calendar.selectedDate()
+                record_date = date(
+                    year=current_date.year(),
+                    month=current_date.month(),
+                    day=current_date.day(),
+                )
+                record = Record(
+                    value=float(self.value_input.text().replace(",", ".")),
+                    record_date=record_date,
+                )
+                session.add(record)
+                session.commit()
+            self.value_input.setText("")
+            self.update_records_year_combobox()
+            self.update_records_month_combobox()
+            self.update_records_table()
+            self.message_box.setText("Registro Adicionado")
+        else:
+            self.message_box.setText("Preencha o Valor")
         self.message_box.show()
 
     def update_records_year_combobox(self):
@@ -128,30 +140,57 @@ class MainWindow(QtWidgets.QWidget):
                     years.append(str(record.record_date.year))
             if years:
                 self.records_year_combobox.addItems(years)
-            else:
-                self.records_year_combobox.addItem(str(date.today().year))
 
     def update_records_month_combobox(self):
         if self.records_year_combobox.currentText():
             year = int(self.records_year_combobox.currentText())
-            months = (
-                MONTHS[: date.today().month] if date.today().year == year else MONTHS
-            )
+            months = []
+            with Session() as session:
+                for record in session.scalars(select(Record)).all():
+                    if (
+                        record.record_date.year == year
+                        and MONTHS[record.record_date.month - 1] not in months
+                    ):
+                        months.append(MONTHS[record.record_date.month - 1])
             self.records_month_combobox.clear()
             self.records_month_combobox.addItems(months)
 
     def update_records_table(self):
-        headers = ["Valor", "Data"]
+        headers = ["ID", "Valor", "Data"]
         data = []
         with Session() as session:
             for record in session.scalars(select(Record)).all():
                 if (
                     str(record.record_date.year)
                     == self.records_year_combobox.currentText()
-                    and record.record_date.month
-                    == self.records_month_combobox.currentIndex()
+                    and MONTHS[record.record_date.month - 1]
+                    == self.records_month_combobox.currentText()
                 ):
-                    data.append([record.value, record.record_date])
+                    data.append(
+                        [
+                            record.id,
+                            f"R$ {record.value:.2f}".replace(".", ","),
+                            record.record_date.strftime("%d/%m/%Y"),
+                        ]
+                    )
         if not data:
             data = [["" for _ in headers]]
+        else:
+            data.sort(key=lambda r: datetime.strptime(r[2], "%d/%m/%Y"))
         self.records_table.setModel(TableModel(self, data, headers))
+
+    @QtCore.Slot()
+    def remove_records(self):
+        with Session() as session:
+            for index in self.records_table.selectedIndexes():
+                record = session.get(
+                    Record, self.records_table.model()._data[index.row()][0]
+                )
+                if record:
+                    session.delete(record)
+                    session.commit()
+        self.update_records_year_combobox()
+        self.update_records_month_combobox()
+        self.update_records_table()
+        self.message_box.setText("Registro(s) Removido(s)")
+        self.message_box.show()

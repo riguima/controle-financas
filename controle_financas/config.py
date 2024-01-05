@@ -1,6 +1,6 @@
 import toml
 
 
-def get_config(testing=False):
+def get_config():
     config = toml.load(open(".config.toml"))
-    return config["testing"] if testing else config["default"]
+    return config["testing"] if config["TESTING"] else config["default"]
