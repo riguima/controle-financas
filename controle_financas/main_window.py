@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from pathlib import Path
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from sqlalchemy import select
@@ -43,7 +44,7 @@ class MainWindow(QtWidgets.QWidget):
         super().__init__()
         self.setFixedSize(800, 600)
         self.setWindowTitle("Controle finanças")
-        with open("styles.qss", "r") as f:
+        with open(Path(__file__).parent.parent / "styles.qss", "r") as f:
             self.setStyleSheet(f.read())
 
         self.message_box = QtWidgets.QMessageBox()

@@ -8,6 +8,7 @@ pyside6 = "*"
 sqlalchemy = "*"
 toml = "*"
 qt-material = "*"
+pyinstaller = "*"
 
 [dev-packages]
 pytest = "*"
