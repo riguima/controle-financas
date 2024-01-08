@@ -30,17 +30,28 @@ class TableModel(QtCore.QAbstractTableModel):
         return None
 
 
+class KeyPressFilter(QtCore.QObject):
+    def eventFilter(self, widget, event):
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() == 16777220:
+                self.parent().add_record_button.click()
+        return False
+
+
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setFixedSize(800, 600)
+        self.setWindowTitle("Controle finanças")
         with open("styles.qss", "r") as f:
             self.setStyleSheet(f.read())
 
         self.message_box = QtWidgets.QMessageBox()
 
-        self.value_label = QtWidgets.QLabel("Valor")
+        self.value_label = QtWidgets.QLabel("Valor R$")
         self.value_input = QtWidgets.QLineEdit()
+        self.value_input.eventFilter = KeyPressFilter(self)
+        self.value_input.installEventFilter(self.value_input.eventFilter)
         self.value_input.setValidator(
             QtGui.QRegularExpressionValidator(r"^\d+,\d{2}$|^\d+$")
         )
@@ -52,6 +63,9 @@ class MainWindow(QtWidgets.QWidget):
             "Data", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
         self.record_date_calendar = QtWidgets.QCalendarWidget()
+        self.record_date_calendar.setVerticalHeaderFormat(
+            QtWidgets.QCalendarWidget.NoVerticalHeader
+        )
         self.record_date_layout = QtWidgets.QVBoxLayout()
         self.record_date_layout.addWidget(self.record_date_label)
         self.record_date_layout.addWidget(self.record_date_calendar)
@@ -92,6 +106,12 @@ class MainWindow(QtWidgets.QWidget):
             self.update_records_table
         )
 
+        self.total_label = QtWidgets.QLabel(
+            "Total: ", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
+        self.total_label.setStyleSheet("font-weight: bold;")
+        self.update_total_label()
+
         self.remove_record_button = QtWidgets.QPushButton("Remover Registros")
         self.remove_record_button.clicked.connect(self.remove_records)
 
@@ -100,6 +120,7 @@ class MainWindow(QtWidgets.QWidget):
         self.records_table_layout.addLayout(self.records_year_layout)
         self.records_table_layout.addLayout(self.records_month_layout)
         self.records_table_layout.addWidget(self.records_table)
+        self.records_table_layout.addWidget(self.total_label)
         self.records_table_layout.addWidget(self.remove_record_button)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -126,6 +147,7 @@ class MainWindow(QtWidgets.QWidget):
             self.update_records_year_combobox()
             self.update_records_month_combobox()
             self.update_records_table()
+            self.update_total_label()
             self.message_box.setText("Registro Adicionado")
         else:
             self.message_box.setText("Preencha o Valor")
@@ -142,6 +164,7 @@ class MainWindow(QtWidgets.QWidget):
                 self.records_year_combobox.addItems(years)
 
     def update_records_month_combobox(self):
+        self.records_month_combobox.clear()
         if self.records_year_combobox.currentText():
             year = int(self.records_year_combobox.currentText())
             months = []
@@ -179,6 +202,17 @@ class MainWindow(QtWidgets.QWidget):
             data.sort(key=lambda r: datetime.strptime(r[2], "%d/%m/%Y"))
         self.records_table.setModel(TableModel(self, data, headers))
 
+    def update_total_label(self):
+        total = 0
+        with Session() as session:
+            for row in self.records_table.model()._data:
+                try:
+                    record = session.get(Record, int(row[0]))
+                    total += record.value
+                except ValueError:
+                    continue
+        self.total_label.setText(f"Total: R$ {total:.2f}".replace(".", ","))
+
     @QtCore.Slot()
     def remove_records(self):
         with Session() as session:
@@ -192,5 +226,10 @@ class MainWindow(QtWidgets.QWidget):
         self.update_records_year_combobox()
         self.update_records_month_combobox()
         self.update_records_table()
+        self.update_total_label()
         self.message_box.setText("Registro(s) Removido(s)")
         self.message_box.show()
+
+    # def keyPressEvent(self, event):
+    #    print(event.key())
+    #    super().keyPressEvent(event)

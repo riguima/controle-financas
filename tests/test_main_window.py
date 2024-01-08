@@ -116,3 +116,15 @@ def test_remove_records(qtbot, session):
         ["" for _ in widget.records_table.model()._headers]
     ]
     assert widget.message_box.isVisible()
+
+
+def test_total_label(qtbot, session):
+    widget = MainWindow()
+    qtbot.addWidget(widget)
+    assert widget.total_label.text() == "Total: R$ 0,00"
+    widget.value_input.setText("100,50")
+    widget.add_record_button.click()
+    assert widget.total_label.text() == "Total: R$ 100,50"
+    widget.records_table.selectRow(0)
+    widget.remove_record_button.click()
+    assert widget.total_label.text() == "Total: R$ 0,00"

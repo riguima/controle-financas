@@ -1,3 +1,12 @@
 QWidget {
     font-size: 20px;
 }
+
+QPushButton {
+    border-radius: 5px;
+    padding: 10px 0px;
+}
+
+QLineEdit, QComboBox {
+    color: white;
+}

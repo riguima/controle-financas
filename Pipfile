@@ -7,6 +7,7 @@ name = "pypi"
 pyside6 = "*"
 sqlalchemy = "*"
 toml = "*"
+qt-material = "*"
 
 [dev-packages]
 pytest = "*"
