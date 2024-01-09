@@ -9,7 +9,7 @@ from controle_financas.main_window import MainWindow
 from controle_financas.models import Base, Record
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='function')
 def session():
     Base.metadata.drop_all(db)
     Base.metadata.create_all(db)
@@ -19,7 +19,7 @@ def session():
 def test_add_record(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    widget.value_input.setText("50,00")
+    widget.value_input.setText('50,00')
     widget.add_record_button.click()
     record = session.scalars(select(Record)).first()
     assert record.value == 50
@@ -30,7 +30,7 @@ def test_add_record(qtbot, session):
 def test_add_record_with_another_date(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    widget.value_input.setText("100,50")
+    widget.value_input.setText('100,50')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 4, 15))
     widget.add_record_button.click()
     record = session.scalars(select(Record)).first()
@@ -57,7 +57,7 @@ def test_records_comboboxes(qtbot, session):
 def test_records_comboboxes_with_record(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    widget.value_input.setText("25")
+    widget.value_input.setText('25')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 12, 12))
     widget.add_record_button.click()
     years = [
@@ -68,52 +68,52 @@ def test_records_comboboxes_with_record(qtbot, session):
         widget.records_month_combobox.itemText(index)
         for index in range(widget.records_month_combobox.count())
     ]
-    assert years == ["2023"]
-    assert months == ["Dezembro"]
+    assert years == ['2023']
+    assert months == ['Dezembro']
 
 
 def test_records_table(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
     assert widget.records_table.model()._data == [
-        ["" for _ in widget.records_table.model()._headers]
+        ['' for _ in widget.records_table.model()._headers]
     ]
 
 
 def test_records_table_with_records(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    widget.value_input.setText("100,50")
+    widget.value_input.setText('100,50')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 4, 15))
     widget.add_record_button.click()
-    widget.value_input.setText("25")
+    widget.value_input.setText('25')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 4, 12))
     widget.add_record_button.click()
     assert widget.records_table.model()._data == [
-        [2, "R$ 25,00", "12/04/2023"],
-        [1, "R$ 100,50", "15/04/2023"],
+        [2, 'R$ 25,00', '12/04/2023'],
+        [1, 'R$ 100,50', '15/04/2023'],
     ]
 
 
 def test_remove_records(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    widget.value_input.setText("100,50")
+    widget.value_input.setText('100,50')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 4, 15))
     widget.add_record_button.click()
-    widget.value_input.setText("25")
+    widget.value_input.setText('25')
     widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 4, 12))
     widget.add_record_button.click()
     widget.records_table.selectRow(1)
     widget.remove_record_button.click()
     assert widget.records_table.model()._data == [
-        [2, "R$ 25,00", "12/04/2023"],
+        [2, 'R$ 25,00', '12/04/2023'],
     ]
     assert widget.message_box.isVisible()
     widget.records_table.selectRow(0)
     widget.remove_record_button.click()
     assert widget.records_table.model()._data == [
-        ["" for _ in widget.records_table.model()._headers]
+        ['' for _ in widget.records_table.model()._headers]
     ]
     assert widget.message_box.isVisible()
 
@@ -121,10 +121,21 @@ def test_remove_records(qtbot, session):
 def test_total_label(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
-    assert widget.total_label.text() == "Total: R$ 0,00"
-    widget.value_input.setText("100,50")
+    assert widget.total_label.text() == 'Total: R$ 0,00'
+    widget.value_input.setText('100,50')
     widget.add_record_button.click()
-    assert widget.total_label.text() == "Total: R$ 100,50"
+    assert widget.total_label.text() == 'Total: R$ 100,50'
     widget.records_table.selectRow(0)
     widget.remove_record_button.click()
-    assert widget.total_label.text() == "Total: R$ 0,00"
+    assert widget.total_label.text() == 'Total: R$ 0,00'
+
+
+def test_mean_label(qtbot, session):
+    widget = MainWindow()
+    qtbot.addWidget(widget)
+    assert widget.mean_label.text() == 'Média: R$ 0,00'
+    widget.value_input.setText('100,50')
+    widget.add_record_button.click()
+    widget.value_input.setText('57,00')
+    widget.add_record_button.click()
+    assert widget.mean_label.text() == 'Média: R$ 78,75'

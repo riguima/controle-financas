@@ -43,25 +43,25 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setFixedSize(800, 600)
-        self.setWindowTitle("Controle finanças")
-        with open(Path(__file__).parent.parent / "styles.qss", "r") as f:
+        self.setWindowTitle('Controle finanças')
+        with open(Path(__file__).parent.parent / 'styles.qss', 'r') as f:
             self.setStyleSheet(f.read())
 
         self.message_box = QtWidgets.QMessageBox()
 
-        self.value_label = QtWidgets.QLabel("Valor R$")
+        self.value_label = QtWidgets.QLabel('Valor R$')
         self.value_input = QtWidgets.QLineEdit()
         self.value_input.eventFilter = KeyPressFilter(self)
         self.value_input.installEventFilter(self.value_input.eventFilter)
         self.value_input.setValidator(
-            QtGui.QRegularExpressionValidator(r"^\d+,\d{2}$|^\d+$")
+            QtGui.QRegularExpressionValidator(r'^\d+,\d{2}$|^\d+$')
         )
         self.value_layout = QtWidgets.QHBoxLayout()
         self.value_layout.addWidget(self.value_label)
         self.value_layout.addWidget(self.value_input)
 
         self.record_date_label = QtWidgets.QLabel(
-            "Data", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            'Data', alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
         self.record_date_calendar = QtWidgets.QCalendarWidget()
         self.record_date_calendar.setVerticalHeaderFormat(
@@ -71,7 +71,7 @@ class MainWindow(QtWidgets.QWidget):
         self.record_date_layout.addWidget(self.record_date_label)
         self.record_date_layout.addWidget(self.record_date_calendar)
 
-        self.add_record_button = QtWidgets.QPushButton("Adicionar Registro")
+        self.add_record_button = QtWidgets.QPushButton('Adicionar Registro')
         self.add_record_button.clicked.connect(self.add_record)
 
         self.inputs_layout = QtWidgets.QVBoxLayout()
@@ -80,17 +80,17 @@ class MainWindow(QtWidgets.QWidget):
         self.inputs_layout.addWidget(self.add_record_button)
 
         self.records_table_label = QtWidgets.QLabel(
-            "Registros", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            'Registros', alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
 
-        self.records_year_label = QtWidgets.QLabel("Ano")
+        self.records_year_label = QtWidgets.QLabel('Ano')
         self.records_year_combobox = QtWidgets.QComboBox()
         self.update_records_year_combobox()
         self.records_year_layout = QtWidgets.QHBoxLayout()
         self.records_year_layout.addWidget(self.records_year_label, 1)
         self.records_year_layout.addWidget(self.records_year_combobox, 4)
 
-        self.records_month_label = QtWidgets.QLabel("Mês")
+        self.records_month_label = QtWidgets.QLabel('Mês')
         self.records_month_combobox = QtWidgets.QComboBox()
         self.update_records_month_combobox()
         self.records_month_layout = QtWidgets.QHBoxLayout()
@@ -108,12 +108,22 @@ class MainWindow(QtWidgets.QWidget):
         )
 
         self.total_label = QtWidgets.QLabel(
-            "Total: ", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            'Total: ', alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
-        self.total_label.setStyleSheet("font-weight: bold;")
+        self.total_label.setStyleSheet('font-weight: bold;')
         self.update_total_label()
 
-        self.remove_record_button = QtWidgets.QPushButton("Remover Registros")
+        self.mean_label = QtWidgets.QLabel(
+            'Média: ', alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
+        self.mean_label.setStyleSheet('font-weight: bold;')
+        self.update_mean_label()
+
+        self.records_table_data_labels_layout = QtWidgets.QHBoxLayout()
+        self.records_table_data_labels_layout.addWidget(self.total_label)
+        self.records_table_data_labels_layout.addWidget(self.mean_label)
+
+        self.remove_record_button = QtWidgets.QPushButton('Remover Registros')
         self.remove_record_button.clicked.connect(self.remove_records)
 
         self.records_table_layout = QtWidgets.QVBoxLayout()
@@ -121,7 +131,7 @@ class MainWindow(QtWidgets.QWidget):
         self.records_table_layout.addLayout(self.records_year_layout)
         self.records_table_layout.addLayout(self.records_month_layout)
         self.records_table_layout.addWidget(self.records_table)
-        self.records_table_layout.addWidget(self.total_label)
+        self.records_table_layout.addLayout(self.records_table_data_labels_layout)
         self.records_table_layout.addWidget(self.remove_record_button)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -139,19 +149,20 @@ class MainWindow(QtWidgets.QWidget):
                     day=current_date.day(),
                 )
                 record = Record(
-                    value=float(self.value_input.text().replace(",", ".")),
+                    value=float(self.value_input.text().replace(',', '.')),
                     record_date=record_date,
                 )
                 session.add(record)
                 session.commit()
-            self.value_input.setText("")
+            self.value_input.setText('')
             self.update_records_year_combobox()
             self.update_records_month_combobox()
             self.update_records_table()
             self.update_total_label()
-            self.message_box.setText("Registro Adicionado")
+            self.update_mean_label()
+            self.message_box.setText('Registro Adicionado')
         else:
-            self.message_box.setText("Preencha o Valor")
+            self.message_box.setText('Preencha o Valor')
         self.message_box.show()
 
     def update_records_year_combobox(self):
@@ -180,7 +191,7 @@ class MainWindow(QtWidgets.QWidget):
             self.records_month_combobox.addItems(months)
 
     def update_records_table(self):
-        headers = ["ID", "Valor", "Data"]
+        headers = ['ID', 'Valor', 'Data']
         data = []
         with Session() as session:
             for record in session.scalars(select(Record)).all():
@@ -193,14 +204,14 @@ class MainWindow(QtWidgets.QWidget):
                     data.append(
                         [
                             record.id,
-                            f"R$ {record.value:.2f}".replace(".", ","),
-                            record.record_date.strftime("%d/%m/%Y"),
+                            f'R$ {record.value:.2f}'.replace('.', ','),
+                            record.record_date.strftime('%d/%m/%Y'),
                         ]
                     )
         if not data:
-            data = [["" for _ in headers]]
+            data = [['' for _ in headers]]
         else:
-            data.sort(key=lambda r: datetime.strptime(r[2], "%d/%m/%Y"))
+            data.sort(key=lambda r: datetime.strptime(r[2], '%d/%m/%Y'))
         self.records_table.setModel(TableModel(self, data, headers))
 
     def update_total_label(self):
@@ -212,7 +223,21 @@ class MainWindow(QtWidgets.QWidget):
                     total += record.value
                 except ValueError:
                     continue
-        self.total_label.setText(f"Total: R$ {total:.2f}".replace(".", ","))
+        self.total_label.setText(f'Total: R$ {total:.2f}'.replace('.', ','))
+
+    def update_mean_label(self):
+        values = []
+        with Session() as session:
+            for row in self.records_table.model()._data:
+                try:
+                    record = session.get(Record, int(row[0]))
+                    values.append(record.value)
+                except ValueError:
+                    continue
+        try:
+            self.mean_label.setText(f'Média: R$ {sum(values) / len(values):.2f}'.replace('.', ','))
+        except ZeroDivisionError:
+            self.mean_label.setText(f'Média: R$ 0,00')
 
     @QtCore.Slot()
     def remove_records(self):
@@ -228,9 +253,6 @@ class MainWindow(QtWidgets.QWidget):
         self.update_records_month_combobox()
         self.update_records_table()
         self.update_total_label()
-        self.message_box.setText("Registro(s) Removido(s)")
+        self.update_mean_label()
+        self.message_box.setText('Registro(s) Removido(s)')
         self.message_box.show()
-
-    # def keyPressEvent(self, event):
-    #    print(event.key())
-    #    super().keyPressEvent(event)

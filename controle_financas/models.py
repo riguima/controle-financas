@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 
 class Record(Base):
-    __tablename__ = "records"
+    __tablename__ = 'records'
     id: Mapped[int] = mapped_column(primary_key=True)
     record_date: Mapped[Optional[date]] = mapped_column(default=date.today())
     value: Mapped[float]

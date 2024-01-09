@@ -9,10 +9,14 @@ sqlalchemy = "*"
 toml = "*"
 qt-material = "*"
 pyinstaller = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 pytest = "*"
 pytest-qt = "*"
+blue = "*"
+isort = "*"
+ruff = "*"
 
 [requires]
 python_version = "3.12"
