@@ -17,6 +17,7 @@ pytest-qt = "*"
 blue = "*"
 isort = "*"
 ruff = "*"
+freezegun = "*"
 
 [requires]
 python_version = "3.12"

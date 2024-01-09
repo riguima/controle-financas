@@ -235,7 +235,7 @@ class MainWindow(QtWidgets.QWidget):
                 except ValueError:
                     continue
         try:
-            self.mean_label.setText(f'Média: R$ {sum(values) / len(values):.2f}'.replace('.', ','))
+            self.mean_label.setText(f'Média: R$ {sum(values) / date.today().day:.2f}'.replace('.', ','))
         except ZeroDivisionError:
             self.mean_label.setText(f'Média: R$ 0,00')
 

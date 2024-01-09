@@ -1,4 +1,5 @@
 from datetime import date
+from freezegun import freeze_time
 
 import pytest
 from PySide6 import QtCore
@@ -130,6 +131,7 @@ def test_total_label(qtbot, session):
     assert widget.total_label.text() == 'Total: R$ 0,00'
 
 
+@freeze_time('2023-01-03')
 def test_mean_label(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
@@ -138,4 +140,4 @@ def test_mean_label(qtbot, session):
     widget.add_record_button.click()
     widget.value_input.setText('57,00')
     widget.add_record_button.click()
-    assert widget.mean_label.text() == 'Média: R$ 78,75'
+    assert widget.mean_label.text() == 'Média: R$ 52,50'
