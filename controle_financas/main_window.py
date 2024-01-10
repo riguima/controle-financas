@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -131,7 +131,9 @@ class MainWindow(QtWidgets.QWidget):
         self.records_table_layout.addLayout(self.records_year_layout)
         self.records_table_layout.addLayout(self.records_month_layout)
         self.records_table_layout.addWidget(self.records_table)
-        self.records_table_layout.addLayout(self.records_table_data_labels_layout)
+        self.records_table_layout.addLayout(
+            self.records_table_data_labels_layout
+        )
         self.records_table_layout.addWidget(self.remove_record_button)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -220,7 +222,8 @@ class MainWindow(QtWidgets.QWidget):
             for row in self.records_table.model()._data:
                 try:
                     record = session.get(Record, int(row[0]))
-                    total += record.value
+                    if record.record_date <= date.today():
+                        total += record.value
                 except ValueError:
                     continue
         self.total_label.setText(f'Total: R$ {total:.2f}'.replace('.', ','))
@@ -231,13 +234,33 @@ class MainWindow(QtWidgets.QWidget):
             for row in self.records_table.model()._data:
                 try:
                     record = session.get(Record, int(row[0]))
-                    values.append(record.value)
+                    if record.record_date <= date.today():
+                        values.append(record.value)
                 except ValueError:
                     continue
         try:
-            self.mean_label.setText(f'Média: R$ {sum(values) / date.today().day:.2f}'.replace('.', ','))
-        except ZeroDivisionError:
-            self.mean_label.setText(f'Média: R$ 0,00')
+            with Session() as session:
+                record = session.get(Record, int(self.records_table.model()._data[0][0]))
+            is_same_month = (
+                record.record_date.year,
+                record.record_date.month,
+            ) == (date.today().year, date.today().month)
+            last_day_of_month = (
+                date(
+                    record.record_date.year,
+                    record.record_date.month + 1
+                    if record.record_date.month != 12
+                    else 1,
+                    1,
+                )
+                - timedelta(days=1)
+            ).day
+            days = date.today().day if is_same_month else last_day_of_month
+            self.mean_label.setText(
+                f'Média: R$ {sum(values) / days:.2f}'.replace('.', ',')
+            )
+        except (ZeroDivisionError, ValueError):
+            self.mean_label.setText('Média: R$ 0,00')
 
     @QtCore.Slot()
     def remove_records(self):

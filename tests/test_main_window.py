@@ -1,7 +1,7 @@
 from datetime import date
-from freezegun import freeze_time
 
 import pytest
+from freezegun import freeze_time
 from PySide6 import QtCore
 from sqlalchemy import select
 
@@ -119,11 +119,16 @@ def test_remove_records(qtbot, session):
     assert widget.message_box.isVisible()
 
 
+@freeze_time('2023-02-15')
 def test_total_label(qtbot, session):
     widget = MainWindow()
     qtbot.addWidget(widget)
     assert widget.total_label.text() == 'Total: R$ 0,00'
     widget.value_input.setText('100,50')
+    widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 2, 15))
+    widget.add_record_button.click()
+    widget.value_input.setText('200,00')
+    widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 2, 20))
     widget.add_record_button.click()
     assert widget.total_label.text() == 'Total: R$ 100,50'
     widget.records_table.selectRow(0)
@@ -137,7 +142,13 @@ def test_mean_label(qtbot, session):
     qtbot.addWidget(widget)
     assert widget.mean_label.text() == 'Média: R$ 0,00'
     widget.value_input.setText('100,50')
+    widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 1, 3))
     widget.add_record_button.click()
     widget.value_input.setText('57,00')
+    widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 1, 1))
+    widget.add_record_button.click()
+    assert widget.mean_label.text() == 'Média: R$ 52,50'
+    widget.value_input.setText('80,00')
+    widget.record_date_calendar.setSelectedDate(QtCore.QDate(2023, 2, 15))
     widget.add_record_button.click()
     assert widget.mean_label.text() == 'Média: R$ 52,50'
