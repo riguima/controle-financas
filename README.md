@@ -2,7 +2,7 @@
 
 Projeto pessoal simples para controle de ganhos, pensado para freelancers.
 
-![Interface](https://github.com/riguima/controle-financas/tree/master/assets/interface.png)
+![Interface](https://github.com/riguima/controle-financas/tree/master/assets/interface.png "Interface")
 
 # Instalação
 
