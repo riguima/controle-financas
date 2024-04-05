@@ -100,12 +100,8 @@ class MainWindow(QtWidgets.QWidget):
         self.records_table = QtWidgets.QTableView()
         self.update_records_table()
         self.records_table.setColumnHidden(0, True)
-        self.records_year_combobox.currentIndexChanged.connect(
-            self.update_records_table
-        )
-        self.records_month_combobox.currentIndexChanged.connect(
-            self.update_records_table
-        )
+        self.records_year_combobox.currentIndexChanged.connect(self.update_infos)
+        self.records_month_combobox.currentIndexChanged.connect(self.update_infos)
 
         self.total_label = QtWidgets.QLabel(
             'Total: ', alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -172,9 +168,10 @@ class MainWindow(QtWidgets.QWidget):
         with Session() as session:
             years = []
             for record in session.scalars(select(Record)).all():
-                if record.record_date.year not in years:
+                if str(record.record_date.year) not in years:
                     years.append(str(record.record_date.year))
             if years:
+                self.records_year_combobox.clear()
                 self.records_year_combobox.addItems(years)
 
     def update_records_month_combobox(self):
@@ -215,6 +212,12 @@ class MainWindow(QtWidgets.QWidget):
         else:
             data.sort(key=lambda r: datetime.strptime(r[2], '%d/%m/%Y'))
         self.records_table.setModel(TableModel(self, data, headers))
+    
+    @QtCore.Slot()
+    def update_infos(self):
+        self.update_records_table()
+        self.update_total_label()
+        self.update_mean_label()
 
     def update_total_label(self):
         total = 0
@@ -222,8 +225,7 @@ class MainWindow(QtWidgets.QWidget):
             for row in self.records_table.model()._data:
                 try:
                     record = session.get(Record, int(row[0]))
-                    if record.record_date <= date.today():
-                        total += record.value
+                    total += record.value
                 except ValueError:
                     continue
         self.total_label.setText(f'Total: R$ {total:.2f}'.replace('.', ','))
